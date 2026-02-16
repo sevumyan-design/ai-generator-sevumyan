@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEVGEN generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0c10;
+            --bg-secondary: #111316;
+            --bg-card: rgba(15, 17, 20, 0.95);
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --accent: #00f2ff;
+            --accent-soft: rgba(0, 242, 255, 0.2);
+            --border: #2d3135;
+            --neon-blue: #00f2ff;
+            --neon-purple: #b300ff;
+            --input-bg: #1e2024;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #e5e7eb;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --accent: #0066ff;
+            --accent-soft: rgba(0, 102, 255, 0.15);
+            --border: #d1d5db;
+            --neon-blue: #0066ff;
+            --neon-purple: #8b5cf6;
+            --input-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Фон с роботом (твой выбор) */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('<a href="https://ibb.co/W4j0z3W1"><img src="https://i.ibb.co/gLhdW7MC/image.jpg" alt="image" border="0"></a>');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.18;
+            pointer-events: none;
+            z-index: 0;
+            filter: blur(1.5px);
+        }
+
+        /* Анимация поверх фото */
+        .animated-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 30% 40%, var(--neon-blue) 0%, transparent 30%),
+                radial-gradient(circle at 70% 60%, var(--neon-purple) 0%, transparent 30%);
+            opacity: 0.05;
+            animation: bgMove 40s linear infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes bgMove {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-3%, -3%) rotate(2deg); }
+        }
+
+        .app {
+            position: relative;
+            z-index: 2;
+            display: grid;
+            grid-template-columns: 260px 1fr 300px;
+            min-height: 100vh;
+            backdrop-filter: blur(0px);
+        }
+
+        /* Левая панель */
+        .sidebar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            padding: 30px 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-radius: 14px;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+            font-size: 15px;
+        }
+
+        .nav-item:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent-soft);
+            color: var(--accent);
+            transform: translateX(3px);
+        }
+
+        .nav-icon {
+            font-size: 22px;
+            font-weight: 300;
+            opacity: 0.8;
+        }
+
+        /* Центр */
+        .main {
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        @keyframes softBreath {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.97; }
+        }
+
+        .logo-main {
+            font-size: 90px;
+            font-weight: 800;
+            letter-spacing: 6px;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 5px;
+            animation: softBreath 5s infinite;
+        }
+
+        .logo-sub {
+            font-size: 18px;
+            letter-spacing: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .input-area {
+            width: 100%;
+            max-width: 550px;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-size: 15px;
+            margin-bottom: 18px;
+            transition: all 0.2s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-soft);
+        }
+
+        .generate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-weight: 500;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            opacity: 0.9;
+        }
+
+        .generate-btn:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px var(--accent-soft);
+        }
+
+        .result {
+            margin-top: 18px;
+            padding: 18px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            min-height: 70px;
+            font-size: 15px;
+        }
+
+        /* Правая панель */
+        .profile-panel {
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 25px;
+        }
+
+        .theme-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+            font-size: 18px;
+            background: transparent;
+        }
+
+        .theme-icon:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent-soft);
+        }
+
+        .theme-icon.active {
+            background: var(--accent);
+            color: black;
+            border-color: var(--accent);
+        }
+
+        .auth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .auth-btn {
+            padding: 13px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .auth-btn:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent-soft);
+            color: var(--accent);
+        }
+
+        .auth-btn.register {
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+            color: white;
+            border: none;
+            opacity: 0.9;
+        }
+
+        .auth-btn.register:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        /* Модальные окна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 35px;
+            max-width: 380px;
+            width: 90%;
+            animation: modalAppear 0.2s;
+        }
+
+        @keyframes modalAppear {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            font-size: 22px;
+            margin-bottom: 18px;
+            color: var(--accent);
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 13px;
+            margin-bottom: 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .modal-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .modal-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 18px 0;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .modal-checkbox input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .modal-link {
+            color: var(--accent);
+            text-decoration: none;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .modal-link:hover {
+            text-decoration: underline;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 13px;
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+            color: white;
+            border: none;
+        }
+
+        .modal-btn:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px var(--accent-soft);
+        }
+
+        .rules-content {
+            max-height: 280px;
+            overflow-y: auto;
+            padding: 14px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            margin: 18px 0;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+        }
+
+        .profile-content {
+            display: none;
+        }
+
+        .profile-content.active {
+            display: block;
+        }
+
+        .user-info {
+            background: rgba(0, 242, 255, 0.02);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 22px;
+            border: 1px solid var(--border);
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-icon {
+            font-size: 16px;
+            opacity: 0.7;
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        .history-search {
+            width: 100%;
+            padding: 11px 14px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            color: var(--text-primary);
+            margin-bottom: 18px;
+            font-size: 13px;
+        }
+
+        .history-search:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .history-list {
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .history-item:hover {
+            border-color: var(--accent);
+            background: rgba(0, 242, 255, 0.02);
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-overlay"></div>
+    
+    <div class="app">
+        <!-- Левая панель -->
+        <div class="sidebar">
+            <div class="nav-item">
+                <span class="nav-icon">⌘</span>
+                <span>Генерация текста</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">⊞</span>
+                <span>Генерация изображений</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">♫</span>
+                <span>Генерация аудио</span>
+            </div>
+            <div class="nav-item">
+                <span class="nav-icon">▶</span>
+                <span>Генерация видео</span>
+            </div>
+        </div>
+
+        <!-- Центр -->
+        <div class="main">
+            <div class="logo-container">
+                <div class="logo-main">SEVGEN</div>
+                <div class="logo-sub">generator</div>
+            </div>
+
+            <div class="input-area">
+                <textarea id="prompt" rows="4" placeholder="Введите запрос..."></textarea>
+                <button class="generate-btn" onclick="generateText()">🚀 Сгенерировать</button>
+                <div id="result" class="result"></div>
+            </div>
+        </div>
+
+        <!-- Правая панель -->
+        <div class="profile-panel">
+            <div class="panel-header">
+                <div class="theme-icons">
+                    <div class="theme-icon" onclick="setTheme('light')" id="theme-light">☀️</div>
+                    <div class="theme-icon" onclick="setTheme('dark')" id="theme-dark">🌙</div>
+                </div>
+            </div>
+
+            <div id="authButtons" class="auth-buttons">
+                <button class="auth-btn" onclick="openModal('login')">ВОЙТИ</button>
+                <button class="auth-btn register" onclick="openModal('register')">ЗАРЕГИСТРИРОВАТЬСЯ</button>
+            </div>
+
+            <div id="profileContent" class="profile-content">
+                <div class="user-info">
+                    <div class="info-item">
+                        <span class="info-icon">👤</span>
+                        <div style="flex:1">
+                            <div class="info-label">Имя</div>
+                            <div class="info-value" id="userName">Александр Севген</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">✉️</span>
+                        <div style="flex:1">
+                            <div class="info-label">Почта</div>
+                            <div class="info-value" id="userEmail">alex@sevgen.dev</div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="text" class="history-search" placeholder="🔍 Поиск по истории" onkeyup="searchHistory()">
+                <div class="history-list" id="historyList">
+                    <div class="history-item">
+                        <span class="history-icon">⌘</span>
+                        <span>Напиши стихотворение о весне</span>
+                    </div>
+                    <div class="history-item">
+                        <span class="history-icon">⊞</span>
+                        <span>Киберпанк город, неон, дождь</span>
+                    </div>
+                    <div class="history-item">
+                        <span class="history-icon">♫</span>
+                        <span>Электронная музыка в стиле synthwave</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Регистрация</div>
+            <input type="text" class="modal-input" id="regName" placeholder="Ваше имя">
+            <input type="email" class="modal-input" id="regEmail" placeholder="Ваша почта">
+            
+            <div class="modal-checkbox">
+                <input type="checkbox" id="agreeRules"> 
+                <span>Я согласен с <a href="#" class="modal-link" onclick="openRules()">правилами пользования</a></span>
+            </div>
+            
+            <div style="color: var(--text-secondary); font-size: 12px; margin-bottom: 15px;">
+                🔒 Все данные конфиденциальны
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn" onclick="closeModal('register')">Отмена</button>
+                <button class="modal-btn primary" onclick="register()">Зарегистрироваться</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Вход</div>
+            <input type="text" class="modal-input" id="loginName" placeholder="Ваше имя">
+            <input type="email" class="modal-input" id="loginEmail" placeholder="Ваша почта">
+
+            <div class="modal-buttons">
+                <button class="modal-btn" onclick="closeModal('login')">Отмена</button>
+                <button class="modal-btn primary" onclick="login()">Войти</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rulesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Правила пользования</div>
+            <div class="rules-content">
+                <h4>1. Общие положения</h4>
+                <p>Используя SEVGEN generator, вы соглашаетесь с данными правилами.</p>
+                <h4>2. Конфиденциальность</h4>
+                <p>Ваши данные не передаются третьим лицам. Все генерации анонимны.</p>
+                <h4>3. Бесплатные промпты</h4>
+                <p>Первые 100 генераций бесплатны. Далее можно выбрать тариф.</p>
+                <h4>4. Запрещено</h4>
+                <p>Запрещено генерировать противоправный контент.</p>
+                <h4>5. Контакты</h4>
+                <p>support@sevgen.dev</p>
+            </div>
+            <button class="modal-btn primary" onclick="closeModal('rules')">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('theme-light').classList.toggle('active', theme === 'light');
+            document.getElementById('theme-dark').classList.toggle('active', theme === 'dark');
+            localStorage.setItem('theme', theme);
+        }
+        setTheme(localStorage.getItem('theme') || 'dark');
+
+        function openModal(type) {
+            document.getElementById(type + 'Modal').classList.add('active');
+        }
+
+        function closeModal(type) {
+            document.getElementById(type + 'Modal').classList.remove('active');
+        }
+
+        function openRules() {
+            closeModal('register');
+            openModal('rules');
+        }
+
+        function register() {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const agree = document.getElementById('agreeRules').checked;
+
+            if (!name || !email) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            if (!agree) {
+                alert('Необходимо согласиться с правилами');
+                return;
+            }
+
+            localStorage.setItem('userName', name);
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('isLoggedIn', 'true');
+
+            document.getElementById('userName').textContent = name;
+            document.getElementById('userEmail').textContent = email;
+            
+            document.getElementById('authButtons').style.display = 'none';
+            document.getElementById('profileContent').classList.add('active');
+            
+            closeModal('register');
+        }
+
+        function login() {
+            const name = document.getElementById('loginName').value;
+            const email = document.getElementById('loginEmail').value;
+
+            if (!name || !email) {
+                alert('Заполните все поля');
+                return;
+            }
+
+            localStorage.setItem('userName', name);
+            localStorage.setItem('userEmail', email);
+            localStorage.setItem('isLoggedIn', 'true');
+
+            document.getElementById('userName').textContent = name;
+            document.getElementById('userEmail').textContent = email;
+            
+            document.getElementById('authButtons').style.display = 'none';
+            document.getElementById('profileContent').classList.add('active');
+            
+            closeModal('login');
+        }
+
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            document.getElementById('authButtons').style.display = 'none';
+            document.getElementById('profileContent').classList.add('active');
+            document.getElementById('userName').textContent = localStorage.getItem('userName') || 'Александр Севген';
+            document.getElementById('userEmail').textContent = localStorage.getItem('userEmail') || 'alex@sevgen.dev';
+        }
+
+        async function generateText() {
+            const prompt = document.getElementById('prompt').value;
+            if (!prompt) {
+                alert('Введите запрос');
+                return;
+            }
+
+            document.getElementById('result').textContent = '⏳ Генерация...';
+            
+            try {
+                const response = await fetch('/.netlify/functions/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await response.json();
+                document.getElementById('result').textContent = data.result || '❌ Ошибка';
+            } catch {
+                document.getElementById('result').textContent = '❌ Ошибка соединения';
+            }
+        }
+
+        function searchHistory() {
+            const search = document.querySelector('.history-search').value.toLowerCase();
+            const items = document.querySelectorAll('.history-item');
+            
+            items.forEach(item => {
+                const text = item.querySelector('span:last-child').textContent.toLowerCase();
+                item.style.display = text.includes(search) ? 'flex' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>

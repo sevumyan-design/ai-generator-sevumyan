@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Дашборд — AI Studio</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">AI Studio</div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <span id="creditsDisplay" class="credits-badge">Загрузка...</span>
+                <button class="btn btn-outline" onclick="location.href='/payment'">Пополнить</button>
+                <button class="btn" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Приветствие -->
+        <div class="glass" style="padding: 30px; margin-bottom: 30px;">
+            <h1 style="font-size: 32px; margin-bottom: 10px;">👋 Добро пожаловать, <span id="username">...</span>!</h1>
+            <p style="color: #4a5568;">Выберите тип контента для генерации</p>
+        </div>
+
+        <!-- Карточки генерации -->
+        <div class="grid" style="margin-bottom: 40px;">
+            <!-- Текст -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                    <div>
+                        <div style="font-size: 36px; margin-bottom: 10px;">📝</div>
+                        <h3 style="font-size: 20px;">Текст</h3>
+                    </div>
+                    <span style="background: #e2e8f0; padding: 4px 12px; border-radius: 100px; font-size: 14px;">1 промпт</span>
+                </div>
+                <textarea id="textPrompt" class="form-control" placeholder="Напишите запрос..." rows="3"></textarea>
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="generateText()">Сгенерировать</button>
+                </div>
+                <div id="textResult" style="margin-top: 20px; padding: 16px; background: #f8fafc; border-radius: 16px; display: none;">
+                    <div style="font-weight: 600; margin-bottom: 8px;">Результат:</div>
+                    <div id="textOutput" style="line-height: 1.6;"></div>
+                </div>
+            </div>
+
+            <!-- Изображение -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                    <div>
+                        <div style="font-size: 36px; margin-bottom: 10px;">🎨</div>
+                        <h3 style="font-size: 20px;">Изображение</h3>
+                    </div>
+                    <span style="background: #e2e8f0; padding: 4px 12px; border-radius: 100px; font-size: 14px;">1 промпт</span>
+                </div>
+                <textarea id="imagePrompt" class="form-control" placeholder="Опишите изображение..." rows="3"></textarea>
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="generateImage()">Создать</button>
+                </div>
+                <div id="imageResult" style="margin-top: 20px; display: none;">
+                    <img id="imageOutput" style="width: 100%; border-radius: 16px; border: 1px solid #e2e8f0;" src="">
+                </div>
+            </div>
+
+            <!-- Видео -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                    <div>
+                        <div style="font-size: 36px; margin-bottom: 10px;">🎬</div>
+                        <h3 style="font-size: 20px;">Видео</h3>
+                    </div>
+                    <span style="background: #e2e8f0; padding: 4px 12px; border-radius: 100px; font-size: 14px;">1 промпт</span>
+                </div>
+                <textarea id="videoPrompt" class="form-control" placeholder="Опишите видео..." rows="3"></textarea>
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="generateVideo()">Создать</button>
+                </div>
+                <div id="videoResult" style="margin-top: 20px; display: none;">
+                    <video id="videoOutput" style="width: 100%; border-radius: 16px;" controls>
+                        <source src="" type="video/mp4">
+                    </video>
+                </div>
+            </div>
+
+            <!-- Аудио -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px;">
+                    <div>
+                        <div style="font-size: 36px; margin-bottom: 10px;">🎵</div>
+                        <h3 style="font-size: 20px;">Аудио</h3>
+                    </div>
+                    <span style="background: #e2e8f0; padding: 4px 12px; border-radius: 100px; font-size: 14px;">1 промпт</span>
+                </div>
+                <textarea id="audioPrompt" class="form-control" placeholder="Опишите звук или музыку..." rows="3"></textarea>
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button class="btn btn-primary" style="flex: 1;" onclick="generateAudio()">Создать</button>
+                </div>
+                <div id="audioResult" style="margin-top: 20px; display: none;">
+                    <audio id="audioOutput" style="width: 100%;" controls>
+                        <source src="" type="audio/mp3">
+                    </audio>
+                </div>
+            </div>
+        </div>
+
+        <!-- История генераций -->
+        <div class="glass" style="padding: 30px;">
+            <h2 style="font-size: 24px; margin-bottom: 20px;">📋 История генераций</h2>
+            <div id="generationsList" style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- Сюда будут подгружаться генерации -->
+                <div style="text-align: center; color: #94a3b8; padding: 40px;">
+                    У вас пока нет генераций
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Загрузка данных пользователя
+        async function loadUserData() {
+            try {
+                const res = await fetch('/api/user');
+                const user = await res.json();
+                
+                if (user.error) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                document.getElementById('username').textContent = user.username;
+                document.getElementById('creditsDisplay').textContent = `${user.credits} промптов`;
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+            }
+        }
+
+        // Генерация текста
+        async function generateText() {
+            const prompt = document.getElementById('textPrompt').value;
+            if (!prompt) {
+                alert('Введите запрос');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Генерация...';
+
+            try {
+                const res = await fetch('/api/generate/text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById('textOutput').textContent = data.result;
+                    document.getElementById('textResult').style.display = 'block';
+                    document.getElementById('creditsDisplay').textContent = `${data.credits} промптов`;
+                }
+            } catch (error) {
+                alert('Ошибка генерации');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Сгенерировать';
+            }
+        }
+
+        // Генерация изображения
+        async function generateImage() {
+            const prompt = document.getElementById('imagePrompt').value;
+            if (!prompt) {
+                alert('Введите запрос');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Генерация...';
+
+            try {
+                const res = await fetch('/api/generate/image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById('imageOutput').src = data.result;
+                    document.getElementById('imageResult').style.display = 'block';
+                    document.getElementById('creditsDisplay').textContent = `${data.credits} промптов`;
+                }
+            } catch (error) {
+                alert('Ошибка генерации');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Создать';
+            }
+        }
+
+        // Генерация видео
+        async function generateVideo() {
+            const prompt = document.getElementById('videoPrompt').value;
+            if (!prompt) {
+                alert('Введите запрос');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Генерация (до 30 сек)...';
+
+            try {
+                const res = await fetch('/api/generate/video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    const video = document.getElementById('videoOutput');
+                    video.src = data.result;
+                    video.load();
+                    document.getElementById('videoResult').style.display = 'block';
+                    document.getElementById('creditsDisplay').textContent = `${data.credits} промптов`;
+                }
+            } catch (error) {
+                alert('Ошибка генерации видео');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Создать';
+            }
+        }
+
+        // Генерация аудио
+        async function generateAudio() {
+            const prompt = document.getElementById('audioPrompt').value;
+            if (!prompt) {
+                alert('Введите запрос');
+                return;
+            }
+
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Генерация...';
+
+            try {
+                const res = await fetch('/api/generate/audio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    const audio = document.getElementById('audioOutput');
+                    audio.src = data.result;
+                    audio.load();
+                    document.getElementById('audioResult').style.display = 'block';
+                    document.getElementById('creditsDisplay').textContent = `${data.credits} промптов`;
+                }
+            } catch (error) {
+                alert('Ошибка генерации аудио');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Создать';
+            }
+        }
+
+        // Выход
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/';
+        }
+
+        // Загружаем данные при открытии
+        loadUserData();
+    </script>
+</body>
+</html>
